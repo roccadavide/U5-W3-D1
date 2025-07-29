@@ -3,6 +3,7 @@ package daviderocca.U5_W2_D5.services;
 //import com.cloudinary.Cloudinary;
 //import com.cloudinary.utils.ObjectUtils;
 import daviderocca.U5_W2_D5.entities.Dipendente;
+import daviderocca.U5_W2_D5.enums.TipoUtente;
 import daviderocca.U5_W2_D5.exceptions.BadRequestException;
 import daviderocca.U5_W2_D5.exceptions.NotFoundException;
 import daviderocca.U5_W2_D5.payloads.NewDipendenteDTO;
@@ -13,6 +14,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -24,6 +26,9 @@ public class DipendenteService {
 
     @Autowired
     private DipendenteRepository dipendenteRepository;
+
+    @Autowired
+    private PasswordEncoder bcrypt;
 
 //    @Autowired
 //    private Cloudinary imageUploader;
@@ -44,6 +49,8 @@ public class DipendenteService {
         newDipendente.setCognome(payload.cognome());
         newDipendente.setEmail(payload.email());
         newDipendente.setUrlImmagineProfilo(null);
+        newDipendente.setPassword(bcrypt.encode(payload.password()));
+        newDipendente.setTipoUtente(TipoUtente.USER);
 
 
         Dipendente savedDipendente = this.dipendenteRepository.save(newDipendente);

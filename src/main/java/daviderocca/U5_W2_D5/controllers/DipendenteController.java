@@ -7,6 +7,8 @@ import daviderocca.U5_W2_D5.services.DipendenteService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -22,9 +24,10 @@ public class DipendenteController {
     private DipendenteService dipendenteService;
 
     @GetMapping
+    @PreAuthorize("hasAuthority('ADMIN')")
     public Page<Dipendente> getDipendenti(@RequestParam(defaultValue = "0") int page,
                                           @RequestParam(defaultValue = "10") int size,
-                                          @RequestParam(defaultValue = "id") String sortBy) {
+                                          @RequestParam(defaultValue = "username") String sortBy) {
         return this.dipendenteService.getDipendente(page, size, sortBy);
     }
 
@@ -33,6 +36,7 @@ public class DipendenteController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("hasAuthority('ADMIN')")
     public Dipendente createDipendente(@RequestBody @Validated NewDipendenteDTO body, BindingResult bindingResult) {
 
         if (bindingResult.hasErrors()) {
@@ -45,6 +49,7 @@ public class DipendenteController {
     }
 
     @PutMapping("/{username}")
+    @PreAuthorize("hasAuthority('ADMIN')")
     public Dipendente findDipendenteByUsernameAndUpdate(@PathVariable String username, @RequestBody @Validated NewDipendenteDTO body) {
         return this.dipendenteService.findDipendenteByUsernameAndUpdate(username, body);
     }
@@ -60,8 +65,25 @@ public class DipendenteController {
 
     @DeleteMapping("/{username}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PreAuthorize("hasAutority('ADMIN')")
     public void deleteDipendenteByUsername(@PathVariable String username) {
         this.dipendenteService.findDipendenteByUsernameAndDelete(username);
+    }
+
+
+    @GetMapping("/me")
+    public Dipendente getOwnProfile(@AuthenticationPrincipal Dipendente currentAuthenticatedDipendente) {
+        return currentAuthenticatedDipendente;
+    }
+
+    @PutMapping("/me")
+    public Dipendente updateOwnProfile(@AuthenticationPrincipal Dipendente currentAuthenticatedDipendente, @RequestBody @Validated NewDipendenteDTO payload) {
+        return this.dipendenteService.findDipendenteByUsernameAndUpdate(currentAuthenticatedDipendente.getUsername(), payload);
+    }
+
+    @DeleteMapping("/me")
+    public void deleteOwnProfile(@AuthenticationPrincipal Dipendente currentAuthenticatedUser) {
+        this.dipendenteService.findDipendenteByUsernameAndDelete(currentAuthenticatedUser.getUsername());
     }
 
 }

@@ -5,6 +5,7 @@ import daviderocca.U5_W2_D5.exceptions.UnauthorizedException;
 import daviderocca.U5_W2_D5.payloads.LoginDTO;
 import daviderocca.U5_W2_D5.tools.JWTTools;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -16,10 +17,13 @@ public class AuthService {
     @Autowired
     private JWTTools jwtTools;
 
+    @Autowired
+    private PasswordEncoder bcrypt;
+
     public String checkCredentialAndGenerateToken(LoginDTO body) {
         Dipendente found = this.dipendenteService.findDipendenteByEmail(body.email());
 
-        if(found.getPassword().equals(body.password())) {
+        if(bcrypt.matches(body.password(), found.getPassword())) {
             String accessToken = jwtTools.createToken(found);
             return accessToken;
         } else {

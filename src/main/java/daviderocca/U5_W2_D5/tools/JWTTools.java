@@ -5,9 +5,11 @@ import daviderocca.U5_W2_D5.exceptions.UnauthorizedException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 
 import java.util.Date;
 
+@Component
 public class JWTTools {
 
     @Value("${jwt.secret}")
@@ -28,6 +30,10 @@ public class JWTTools {
         } catch (Exception ex) {
             throw new UnauthorizedException("Problemi con il token! Effettuare di nuovo il login!");
         }
+    }
+
+    public String extractIdFromToken(String accessToken) {
+        return Jwts.parser().verifyWith(Keys.hmacShaKeyFor(secret.getBytes())).build().parseSignedClaims(accessToken).getPayload().getSubject();
     }
 
 }

@@ -1,12 +1,17 @@
 package daviderocca.U5_W2_D5.security;
 
+import daviderocca.U5_W2_D5.entities.Dipendente;
 import daviderocca.U5_W2_D5.exceptions.UnauthorizedException;
+import daviderocca.U5_W2_D5.services.DipendenteService;
 import daviderocca.U5_W2_D5.tools.JWTTools;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -19,8 +24,14 @@ public class JWTCheckerFilter extends OncePerRequestFilter {
     @Autowired
     private JWTTools jwtTools;
 
+    @Autowired
+    private DipendenteService dipendenteService;
+
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+
+        // *********************************************** AUTENTICAZIONE ***************************************************
+
 
         String authHeader = request.getHeader("Authorization");
         if(authHeader == null || !authHeader.startsWith("Bearer ")) throw new UnauthorizedException("Inserire il token nell'Authorization Header nel formato corretto!");
@@ -29,8 +40,18 @@ public class JWTCheckerFilter extends OncePerRequestFilter {
 
         jwtTools.verifyToken(accessToken);
 
-        filterChain.doFilter(request, response);
 
+        // ****************************************** AUTORIZZAZIONE *******************************************************
+
+        String usernameDipendente = jwtTools.extractIdFromToken(accessToken);
+
+        Dipendente currentDipendente = this.dipendenteService.findDipendenteByUsername(usernameDipendente);
+
+        Authentication authentication = new UsernamePasswordAuthenticationToken(currentDipendente, null, currentDipendente.getAuthorities());
+
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+
+        filterChain.doFilter(request, response);
     }
 
     @Override
